@@ -6,7 +6,6 @@
   <meta property="userSensor1" label="Sensor Choice 1" type="sensor" default="Memory Load"/>
   <meta property="userSensor2" label="Sensor Choice 2" type="sensor" default="CPU Load"/>
 
-  <meta property="tapOn" label="Tap Effects" type="boolean" default="1" />
   <meta property="turretOn" label="Draw Turret" type="boolean" default="1" />
   <meta property="pixSize" label="Bullet Size" type="number" default="25" min="0" max="100">
   <meta property="pixSpeed" label="Bullet Speed Boost" type="number" default="25" min="0" max="100">
@@ -96,12 +95,7 @@ function shooter(direction = 1){
       DrawRect(this.x - 20 * direction, this.y - 20, 40, 40, `hsl(0, 0%, 40%)`);
     }
 
-    if(tapOn){
-      this.rot = Math.atan2(coord[1] - 100, coord[0] - 160);
-    } else {
-      this.rot += .1 * rotSensor * direction;
-      this.rot %= Math.PI * 2;
-    }
+    this.rot = Math.atan2(coord[1] - 100, coord[0] - 160);
 
     if(!this.count) {
       const projX = direction === 1 ? 0 : 320;
