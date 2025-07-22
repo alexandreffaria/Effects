@@ -1,0 +1,207 @@
+<head>
+  <title>Hell</title>
+  <meta description="H3ll" />
+  <meta publisher="meulindo" />
+
+  <meta property="userSensor1" label="Sensor Choice 1" type="sensor" default="Memory Load"/>
+  <meta property="userSensor2" label="Sensor Choice 2" type="sensor" default="CPU Load"/>
+
+  <meta property="tapOn" label="Tap Effects" type="boolean" default="1" />
+  <meta property="turretOn" label="Draw Turret" type="boolean" default="1" />
+  <meta property="pixSize" label="Bullet Size" type="number" default="25" min="0" max="100">
+  <meta property="pixSpeed" label="Bullet Speed Boost" type="number" default="25" min="0" max="100">
+  <meta property="pixSize2" label="Bullet Size 2" type="number" default="25" min="0" max="100">
+  <meta property="pixSpeed2" label="Bullet Speed Boost 2" type="number" default="25" min="0" max="100">
+  <meta property="pixFade" label="Bullet Fade" type="number" default="50" min="0" max="100">
+  <meta property="coolColor" label="Bullet 'Cool' Color" type="color" default="#0000ff" min="0" max="360" />
+  <meta property="hotColor" label="Bullet 'Hot' Color" type="color" default="#ff0000" min="0" max="360" />
+  <meta property="coolColor2" label="Bullet 'Cool' Color 2" type="color" default="#0000ff" min="0" max="360" />
+  <meta property="hotColor2" label="Bullet 'Hot' Color 2" type="color" default="#ff0000" min="0" max="360" />
+  <meta property="backColor" label="Background Color" type="color" default="#020202" min="0" max="360" />
+</head>
+
+<body style="margin: 0; padding: 0; background: #000;">
+  <canvas id="exCanvas" width="320" height="200"></canvas>
+</body>
+
+<script>
+var canvas = document.getElementById('exCanvas');
+var ctx = canvas.getContext('2d');
+var width = 320;
+var height = 200;
+var effects = [];
+
+let gSensor = 0;
+let gSensor2 = 0;
+let gColor = [0, 0, 255];
+let gColor2 = [0, 0, 255];
+
+let gCoord = [320, 100];
+
+let proCool = [];
+function oncoolColorChanged(){ proCool = hexToHSL(coolColor) }
+
+let proBack = [];
+function onbackColorChanged(){ proBack = hexToHSL(backColor) }
+
+function update() {
+  DrawRect(0, 0, 320, 200, `hsla(${proBack[0]}, ${proBack[1]}%, ${proBack[2]}%, ${.5 - pixFade / 200})`);
+
+  let temp = engine.getSensorValue(userSensor1);
+  let temp2 = engine.getSensorValue(userSensor2);
+  gSensor = temp.value / (temp.max - temp.min);
+  gSensor2 = temp2.value / (temp2.max - temp2.min);
+
+  let tempCool = hexToRgb(coolColor);
+  let tempHot = hexToRgb(hotColor);
+  let tempCool2 = hexToRgb(coolColor2);
+  let tempHot2 = hexToRgb(hotColor2);
+
+  for(let i = 0; i < 3; i++) {
+    gColor[i] = tempCool[i] + (tempHot[i] - tempCool[i]) * gSensor;
+    gColor2[i] = tempCool2[i] + (tempHot2[i] - tempCool2[i]) * gSensor2;
+  }
+
+  if (effects.length < 2) {
+    effects.push(new shooter(1));
+    effects.push(new shooter(-1));
+  }
+
+  effects.forEach((ele, i) => {
+    ele.draw();
+    if (ele.lifetime <= 0) effects.splice(i, 1);
+  });
+
+  window.requestAnimationFrame(update);
+};
+
+function shooter(direction = 1){
+  this.x = 160;
+  this.y = 100;
+  this.rot = 0;
+  this.count = 0;
+  this.direction = direction;
+  this.draw = function(){
+    const rotSensor = direction === 1 ? gSensor : gSensor2;
+    const gColorUsed = direction === 1 ? gColor : gColor2;
+    const pixSizeUsed = direction === 1 ? pixSize : pixSize2;
+    const pixSpeedUsed = direction === 1 ? pixSpeed : pixSpeed2;
+    const coord = direction === 1 ? gCoord : [320 - gCoord[0], gCoord[1]];
+
+    if (turretOn){
+      DrawCircle(this.x, this.y, 15, `hsl(0, 0%, 30%)`);
+      testTranslate([160, 100], [-160, -100], this.rot, direction, 1);
+      DrawRect(this.x, this.y - 15, 30, 30, `hsl(0, 0%, 50%)`);
+      ctx.restore();
+      DrawRect(this.x - 20 * direction, this.y - 20, 40, 40, `hsl(0, 0%, 40%)`);
+    }
+
+    if(tapOn){
+      this.rot = Math.atan2(coord[1] - 100, coord[0] - 160);
+    } else {
+      this.rot += .1 * rotSensor * direction;
+      this.rot %= Math.PI * 2;
+    }
+
+    if(!this.count) {
+      const projX = direction === 1 ? 0 : 320;
+      const projY = direction === 1 ? 10 : 190;
+      const rot = this.rot;
+      const pushProj = () => effects.push(new proj(projX, projY, rot, gColorUsed, direction, pixSizeUsed, pixSpeedUsed));
+      if(rotSensor < .25) {
+        pushProj();
+      } else if (rotSensor < .5){
+        pushProj(); setTimeout(pushProj, 5000 - 5000 * rotSensor);
+      } else if (rotSensor < .75){
+        pushProj();
+        setTimeout(pushProj, 5000 - 5000 * rotSensor);
+        setTimeout(pushProj, 10000 - 10000 * rotSensor);
+      } else {
+        pushProj();
+        this.count = 9;
+      }
+    }
+
+    this.count < 10 ? this.count += rotSensor * 0.5 : this.count = 0;
+  }
+}
+
+function proj(x, y, rot, color, direction = 1, size = 25, speed = 25){
+  this.x = x;
+  this.y = y;
+  this.rot = rot;
+  this.color = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+  this.lifetime = 1;
+  this.draw = function(){
+    const centerY = direction === 1 ? 50 : 150;
+    testTranslate([160, centerY], [-160, -centerY], this.rot, direction, 1);
+    DrawRect(this.x - size / 4, this.y - size / 4, size / 2, size / 3, this.color);
+    ctx.globalAlpha = Math.sin((this.x + this.y) / 10) * .025 + .05;
+    DrawRect(this.x - size, this.y - size, size * 2, size * 2, this.color);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    this.x < 360 && this.x > -40 ? this.x += (0.5 * direction * gSensor) + direction * (speed / 50) : this.lifetime = 0;
+  }
+}
+
+function DrawCircle(x, y, radius, color) {
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.arc(x, y, radius, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
+function DrawRect(x, y, width, height, color) {
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
+}
+
+function testTranslate(start, end, rot, scaleX, scaleY){
+  ctx.save();
+  ctx.translate(start[0], start[1]);
+  ctx.scale(scaleX, scaleY);
+  ctx.rotate(rot);
+  ctx.translate(end[0], end[1]);
+}
+
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [
+    parseInt(result[1], 16),
+    parseInt(result[2], 16),
+    parseInt(result[3], 16)
+  ] : null;
+}
+
+function hexToHSL(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  var r = parseInt(result[1], 16) / 255;
+  var g = parseInt(result[2], 16) / 255;
+  var b = parseInt(result[3], 16) / 255;
+
+  var max = Math.max(r, g, b), min = Math.min(r, g, b);
+  var h, s, l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    var d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function onCanvasTapped(x, y) {
+  gCoord = [x, y];
+}
+
+window.requestAnimationFrame(update);
+</script>
