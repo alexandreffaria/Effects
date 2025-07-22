@@ -123,7 +123,7 @@ function particle(x, y, rot, color, direction = 1, size = 25, speed = 25){
     testTranslate([160, centerY], [-160, -centerY], this.rot, direction, 1);
     DrawRect(this.x - size / 4, this.y - size / 4, size / 2, size / 3, this.color);
     ctx.globalAlpha = Math.sin((this.x + this.y) / 10) * .025 + .05;
-    DrawRect(this.x - size, this.y - size, size * 2, size * 2, this.color);
+    DrawRect(this.x - size, this.y - size / 4, size * 2, size / 3, this.color);
     ctx.globalAlpha = 1;
     ctx.restore();
     this.x < 360 && this.x > -40 ? this.x += (0.5 * direction * gSensor) + direction * (speed / 50) : this.lifetime = 0;
