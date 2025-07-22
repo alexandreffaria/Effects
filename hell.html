@@ -6,16 +6,15 @@
   <meta property="userSensor1" label="Sensor Choice 1" type="sensor" default="Memory Load"/>
   <meta property="userSensor2" label="Sensor Choice 2" type="sensor" default="CPU Load"/>
 
-  <meta property="turretOn" label="Draw Turret" type="boolean" default="1" />
-  <meta property="pixSize" label="Bullet Size" type="number" default="25" min="0" max="100">
-  <meta property="pixSpeed" label="Bullet Speed Boost" type="number" default="25" min="0" max="100">
-  <meta property="pixSize2" label="Bullet Size 2" type="number" default="25" min="0" max="100">
-  <meta property="pixSpeed2" label="Bullet Speed Boost 2" type="number" default="25" min="0" max="100">
-  <meta property="pixFade" label="Bullet Fade" type="number" default="50" min="0" max="100">
-  <meta property="coolColor" label="Bullet 'Cool' Color" type="color" default="#0000ff" min="0" max="360" />
-  <meta property="hotColor" label="Bullet 'Hot' Color" type="color" default="#ff0000" min="0" max="360" />
-  <meta property="coolColor2" label="Bullet 'Cool' Color 2" type="color" default="#0000ff" min="0" max="360" />
-  <meta property="hotColor2" label="Bullet 'Hot' Color 2" type="color" default="#ff0000" min="0" max="360" />
+  <meta property="pixSize" label="Particle Size" type="number" default="25" min="0" max="100">
+  <meta property="pixSpeed" label="Particle Speed Boost" type="number" default="25" min="0" max="100">
+  <meta property="pixSize2" label="Particle Size 2" type="number" default="25" min="0" max="100">
+  <meta property="pixSpeed2" label="Particle Speed Boost 2" type="number" default="25" min="0" max="100">
+  <meta property="pixFade" label="Particle Fade" type="number" default="50" min="0" max="100">
+  <meta property="coolColor" label="'Cool' Color" type="color" default="#0000ff" min="0" max="360" />
+  <meta property="hotColor" label="'Hot' Color" type="color" default="#ff0000" min="0" max="360" />
+  <meta property="coolColor2" label="'Cool' Color 2" type="color" default="#0000ff" min="0" max="360" />
+  <meta property="hotColor2" label="'Hot' Color 2" type="color" default="#ff0000" min="0" max="360" />
   <meta property="backColor" label="Background Color" type="color" default="#020202" min="0" max="360" />
 </head>
 
@@ -62,8 +61,8 @@ function update() {
   }
 
   if (effects.length < 2) {
-    effects.push(new shooter(1));
-    effects.push(new shooter(-1));
+    effects.push(new source(1));
+    effects.push(new source(-1));
   }
 
   effects.forEach((ele, i) => {
@@ -74,7 +73,7 @@ function update() {
   window.requestAnimationFrame(update);
 };
 
-function shooter(direction = 1){
+function source(direction = 1){
   this.x = 160;
   this.y = 100;
   this.rot = 0;
@@ -87,13 +86,6 @@ function shooter(direction = 1){
     const pixSpeedUsed = direction === 1 ? pixSpeed : pixSpeed2;
     const coord = direction === 1 ? gCoord : [320 - gCoord[0], gCoord[1]];
 
-    if (turretOn){
-      DrawCircle(this.x, this.y, 15, `hsl(0, 0%, 30%)`);
-      testTranslate([160, 100], [-160, -100], this.rot, direction, 1);
-      DrawRect(this.x, this.y - 15, 30, 30, `hsl(0, 0%, 50%)`);
-      ctx.restore();
-      DrawRect(this.x - 20 * direction, this.y - 20, 40, 40, `hsl(0, 0%, 40%)`);
-    }
 
     this.rot = Math.atan2(coord[1] - 100, coord[0] - 160);
 
@@ -101,7 +93,7 @@ function shooter(direction = 1){
       const projX = direction === 1 ? 0 : 320;
       const projY = direction === 1 ? 10 : 190;
       const rot = this.rot;
-      const pushProj = () => effects.push(new proj(projX, projY, rot, gColorUsed, direction, pixSizeUsed, pixSpeedUsed));
+      const pushProj = () => effects.push(new particle(projX, projY, rot, gColorUsed, direction, pixSizeUsed, pixSpeedUsed));
       if(rotSensor < .25) {
         pushProj();
       } else if (rotSensor < .5){
@@ -120,7 +112,7 @@ function shooter(direction = 1){
   }
 }
 
-function proj(x, y, rot, color, direction = 1, size = 25, speed = 25){
+function particle(x, y, rot, color, direction = 1, size = 25, speed = 25){
   this.x = x;
   this.y = y;
   this.rot = rot;
