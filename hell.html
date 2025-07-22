@@ -11,6 +11,7 @@
   <meta property="pixSize2" label="Particle Size 2" type="number" default="25" min="0" max="100">
   <meta property="pixSpeed2" label="Particle Speed Boost 2" type="number" default="25" min="0" max="100">
   <meta property="pixFade" label="Particle Fade" type="number" default="50" min="0" max="100">
+  <meta property="fadeWidth" label="Fade Width Multiplier" type="number" default="2" min="1" max="5">
   <meta property="coolColor" label="'Cool' Color" type="color" default="#0000ff" min="0" max="360" />
   <meta property="hotColor" label="'Hot' Color" type="color" default="#ff0000" min="0" max="360" />
   <meta property="coolColor2" label="'Cool' Color 2" type="color" default="#0000ff" min="0" max="360" />
@@ -123,7 +124,7 @@ function particle(x, y, rot, color, direction = 1, size = 25, speed = 25){
     testTranslate([160, centerY], [-160, -centerY], this.rot, direction, 1);
     DrawRect(this.x - size / 4, this.y - size / 4, size / 2, size / 3, this.color);
     ctx.globalAlpha = Math.sin((this.x + this.y) / 10) * .025 + .05;
-    DrawRect(this.x - size, this.y - size / 4, size * 2, size / 3, this.color);
+    DrawRect(this.x - size * fadeWidth / 2, this.y - size / 4, size * fadeWidth, size / 3, this.color);
     ctx.globalAlpha = 1;
     ctx.restore();
     this.x < 360 && this.x > -40 ? this.x += (0.5 * direction * gSensor) + direction * (speed / 50) : this.lifetime = 0;
@@ -183,10 +184,6 @@ function hexToHSL(hex) {
   }
 
   return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
-}
-
-function onCanvasTapped(x, y) {
-  gCoord = [x, y];
 }
 
 window.requestAnimationFrame(update);
